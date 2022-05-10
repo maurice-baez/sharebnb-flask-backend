@@ -14,9 +14,19 @@ class User(db.Model):
 
     __tablename__ = 'users'
 
-    id = db.Column(
-        db.Integer,
+    username = db.Column(
+        db.Text,
         primary_key=True,
+    )
+
+    first_name = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    last_name = db.Column(
+        db.Text,
+        nullable=False
     )
 
     email = db.Column(
@@ -25,11 +35,6 @@ class User(db.Model):
         unique=True,
     )
 
-    username = db.Column(
-        db.Text,
-        nullable=False,
-        unique=True,
-    )
 
     image_url = db.Column(
         db.Text,
@@ -46,6 +51,7 @@ class User(db.Model):
         nullable=False,
     )
 
+
     listings = db.relationship('Listing', cascade='all, delete')
 
     messages = db.relationship('Message',
@@ -53,7 +59,7 @@ class User(db.Model):
                                 order_by='Message.timestamp.desc()')
 
     def __repr__(self):
-        return f"<User #{self.id}: {self.username}, {self.email}>"
+        return f"<User #{self.username}: {self.email}>"
 
 
     @classmethod
@@ -98,7 +104,48 @@ class User(db.Model):
         return False
 
 
+class Listing(db.Model):
+    """Listing in the system."""
 
+    __tablename__ = 'listings'
+
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    title = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    location = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    price_per_night = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    image_url = db.Column(
+        db.Text,
+        default="/static/images/default-pic.png",
+        nullable=False
+    )
+
+    user_id = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
 
 
 

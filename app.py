@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, request, session, g
+from flask import Flask, request, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
@@ -61,68 +61,54 @@ def add_csrf_form_to_all_pages():
 def signup():
     """Handle user signup.
 
-    Create new user and add to DB. Redirect to home page.
+    Create new user and add to DB.
 
-    If form not valid, present form.
+    If form not valid, throw Error.
 
-    If the there already is a user with that username: flash message
-    and re-present form.
+    If theres already a user with that username: throw Error
     """
 
-    form = UserAddForm()
+    received = request.json
+
+    form = UserAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
-        try:
-            user = User.signup(
-                username=form.username.data,
-                password=form.password.data,
-                email=form.email.data,
-                image_url=form.image_url.data or User.image_url.default.arg,
-            )
-            db.session.commit()
 
-        except IntegrityError:
-            flash("Username already taken", 'danger')
-            return render_template('users/signup.html', form=form)
+        #try/except here
+        newUser = User.signup(received)
 
-        do_login(user)
+        # token = call createToken function
 
-        return redirect("/")
+        return jsonify(
+            token=token
+        )
 
     else:
-        return render_template('users/signup.html', form=form)
+        return jsonify(errors=form.errors)
+
 
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
     """Handle user login."""
 
-    form = LoginForm()
+
+    received = request.json
+
+    form = LoginForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
-        user = User.authenticate(form.username.data,
-                                 form.password.data)
 
-        if user:
-            do_login(user)
-            flash(f"Hello, {user.username}!", "success")
-            return redirect("/")
+        #try/except here
+        user = User.authenticate(received)
 
-        flash("Invalid credentials.", 'danger')
+        # token = call createToken function
 
-    return render_template('users/login.html', form=form)
-
-
-@app.post('/logout')
-def logout():
-    """Handle logout of user."""
-
-    if g.csrf_form.validate_on_submit():
-        do_logout()
-
-        flash("Successfully logged out", "success")
-        return redirect("/login")
+        return jsonify(
+            token=token
+        )
 
     else:
-        # didn't pass CSRF; ignore logout attempt
-        raise Unauthorized()
+        return jsonify(errors=form.errors)
+
+
