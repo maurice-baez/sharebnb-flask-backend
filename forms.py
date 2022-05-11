@@ -15,7 +15,9 @@ class MessageForm(FlaskForm):
 
 class UserAddForm(FlaskForm):
     """Form for adding users."""
-
+    class Meta:
+        csrf = False
+        
     username = StringField('Username', validators=[DataRequired()])
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])

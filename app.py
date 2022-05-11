@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, CSRFProtection
-from models import db, connect_db, User, Message
+from models import db, connect_db, User
 
 CURR_USER_KEY = "curr_user"
 
@@ -27,37 +27,37 @@ connect_db(app)
 # User signup/login/logout
 
 
-@app.before_request
-def add_user_to_g():
-    """If we're logged in, add curr user to Flask global."""
+# @app.before_request
+# def add_user_to_g():
+#     """If we're logged in, add curr user to Flask global."""
 
-    if CURR_USER_KEY in session:
-        g.user = User.query.get(session[CURR_USER_KEY])
+#     if CURR_USER_KEY in session:
+#         g.user = User.query.get(session[CURR_USER_KEY])
 
-    else:
-        g.user = None
-
-
-def do_login(user):
-    """Log in user."""
-
-    session[CURR_USER_KEY] = user.id
+#     else:
+#         g.user = None
 
 
-def do_logout():
-    """Logout user."""
+# def do_login(user):
+#     """Log in user."""
 
-    if CURR_USER_KEY in session:
-        del session[CURR_USER_KEY]
-
-@app.before_request
-def add_csrf_form_to_all_pages():
-    """Before every route, add CSRF-only form to global object."""
-
-    g.csrf_form = CsrfOnlyForm()
+#     session[CURR_USER_KEY] = user.id
 
 
-@app.route('/signup', methods=["GET", "POST"])
+# def do_logout():
+#     """Logout user."""
+
+#     if CURR_USER_KEY in session:
+#         del session[CURR_USER_KEY]
+
+# @app.before_request
+# def add_csrf_form_to_all_pages():
+#     """Before every route, add CSRF-only form to global object."""
+
+#     g.csrf_form = CsrfOnlyForm()
+
+
+@app.post('/signup')
 def signup():
     """Handle user signup.
 
@@ -69,18 +69,18 @@ def signup():
     """
 
     received = request.json
-
+  
     form = UserAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
-
         #try/except here
-        newUser = User.signup(received)
+        newUser = User.signup(username=received['username'], password=received['password'], first_name=received['first_name'], last_name=received['last_name'],
+            email=received['email'], image_url=received['image_url'])
 
         # token = call createToken function
 
         return jsonify(
-            token=token
+            token="token"
         )
 
     else:
@@ -105,7 +105,7 @@ def login():
         # token = call createToken function
 
         return jsonify(
-            token=token
+            token="token"
         )
 
     else:

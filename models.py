@@ -54,9 +54,9 @@ class User(db.Model):
 
     listings = db.relationship('Listing', cascade='all, delete')
 
-    messages = db.relationship('Message',
-                                cascade='all, delete',
-                                order_by='Message.timestamp.desc()')
+    # messages = db.relationship('Message',
+    #                             cascade='all, delete',
+    #                             order_by='Message.timestamp.desc()')
 
     def __repr__(self):
         return f"<User #{self.username}: {self.email}>"
