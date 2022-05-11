@@ -188,6 +188,76 @@ class Listing(db.Model):
         }
 
 
+class Booking(db.Model):
+    """booking in the system."""
+
+    __tablename__ = 'bookings'
+
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    listing_id= db.Column(
+        db.Integer,
+        db.ForeignKey('listings.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+
+    start_date = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    end_date = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    host = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    guest = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    def __repr__(self):
+        return f"<Listing #{self.id},Listing id: {self.listing_id}, Host: {self.host}, Guest: {self.guest}>"
+
+    @classmethod
+    def add_booking(cls, listing_id, start_date, end_date, host, guest):
+        """Add a new booking to database """
+
+        booking = Booking(
+            listing_id=listing_id,
+            start_date=start_date,
+            end_date=end_date,
+            host=host,
+            guest=guest
+        )
+
+        db.session.add(booking)
+
+        return booking
+
+    def serialize(self):
+        """ Serialize to dictionary """
+
+        return {
+            "id": self.id,
+            "listingId": self.listing_id,
+            "startDate": self.start_date,
+            "endDate": self.end_date,
+            "host": self.host,
+            "guest": self.guest
+        }
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.
