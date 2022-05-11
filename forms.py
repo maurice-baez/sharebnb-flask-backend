@@ -5,6 +5,10 @@ from wtforms.validators import DataRequired, Email, Length, InputRequired, Email
 
 class ListingAddForm(FlaskForm):
     """Form for adding a new Listing"""
+
+    class Meta:
+        csrf = False
+
     title = StringField('Title', validators=[DataRequired()])
     description = StringField('Description', validators=[DataRequired()])
     location = StringField('Location', validators=[DataRequired()])
@@ -21,6 +25,7 @@ class MessageForm(FlaskForm):
 
 class UserAddForm(FlaskForm):
     """Form for adding users."""
+    
     class Meta:
         csrf = False
 

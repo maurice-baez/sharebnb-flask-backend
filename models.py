@@ -129,7 +129,7 @@ class Listing(db.Model):
         db.Text,
         nullable=False
     )
-  
+
     type = db.Column(
         db.Text,
         nullable=False
@@ -152,6 +152,9 @@ class Listing(db.Model):
         nullable=False
     )
 
+    def __repr__(self):
+        return f"<Listing #{self.id}, {self.title}, {self.description}, {self.location}, {self.type}, {self.price_per_night}, {self.image_url}, {self.user_id}>"
+
     @classmethod
     def add_listing(cls, title, description, location, type, price_per_night, image_url, user_id):
         """Add a new listing to database """
@@ -167,9 +170,22 @@ class Listing(db.Model):
         )
 
         db.session.add(listing)
+
         return listing
 
+    def serialize(self):
+        """ Serialize to dictionary """
 
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "location": self.location,
+            "type": self.type,
+            "pricePerNight": self.price_per_night,
+            "imageUrl": self.image_url,
+            "userId": self.user_id
+        }
 
 
 

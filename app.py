@@ -3,6 +3,7 @@ import os
 from flask import Flask, request, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm
 from models import db, connect_db, User, Listing
@@ -75,7 +76,7 @@ def login():
     form = LoginForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
-    
+
         user = User.authenticate(username=received['username'],
                     password=received['password'])
 
@@ -87,7 +88,7 @@ def login():
 
     else:
         return jsonify(errors=form.errors)
-    
+
 
 
 ##############################################################################
@@ -96,16 +97,20 @@ def login():
 @app.get('/listings')
 def get_listings():
     search = request.args.get("q")
+
+    print("search=", search)
     if not search:
         listings = Listing.query.all()
     else:
-        listings = Listing.query.filter(Listing.title.like(f"%{search}%"),
+        listings = Listing.query.filter(or_(Listing.title.like(f"%{search}%"),
                                         Listing.location.like(f"%{search}%"),
                                         Listing.type.like(f"%{search}%"),
                                         Listing.description.like(f"%{search}%")
-                                        ).all()
-    
-    return jsonify(listings=listings)
+                                        )).all()
+
+    serialize = [l.serialize() for l in listings]
+
+    return jsonify(listings=serialize)
 
 @app.post('/listings')
 def add_listing():
@@ -120,7 +125,7 @@ def add_listing():
         else: image_url = None
 
         try:
-            listing = Listing.add_listing(title=received['title'],
+            new_listing = Listing.add_listing(title=received['title'],
                             description=received['description'],
                             location=received['location'],
                             type=received['type'],
@@ -130,9 +135,22 @@ def add_listing():
                             # CHANGE TO DYNAMIC USERID FROM TOKEN
             db.session.commit()
 
-            return jsonify(listing = listing)
+            new_listing.serialize()
+
+            return jsonify(listing=new_listing)
+
         except IntegrityError:
+
             return jsonify(error="database error")
 
     else:
         return jsonify(errors=form.errors)
+
+@app.get("/listings/<int:id>")
+def get_listing(id):
+
+    """Get a single listing"""
+
+    listing = Listing.query.get(id).serialize()
+
+    return jsonify(listing=listing)
