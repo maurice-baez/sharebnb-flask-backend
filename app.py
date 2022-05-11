@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, CSRFProtection
 from models import db, connect_db, User
+from helpers import create_token
 
 CURR_USER_KEY = "curr_user"
 
@@ -21,7 +22,7 @@ app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
-
+db.create_all()
 
 ##############################################################################
 # User signup/login/logout
@@ -57,7 +58,7 @@ connect_db(app)
 #     g.csrf_form = CsrfOnlyForm()
 
 
-@app.post('/signup')
+@app.route('/signup', methods=["GET", "POST"])
 def signup():
     """Handle user signup.
 
@@ -69,19 +70,28 @@ def signup():
     """
 
     received = request.json
-  
+
     form = UserAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
-        #try/except here
-        newUser = User.signup(username=received['username'], password=received['password'], first_name=received['first_name'], last_name=received['last_name'],
-            email=received['email'], image_url=received['image_url'])
 
-        # token = call createToken function
+        if 'image_url' in received:
+            image_url = received['image_url']
+        else: image_url = None
 
-        return jsonify(
-            token="token"
-        )
+        try:
+            User.signup(username=received['username'], password=received['password'], first_name=received['first_name'], last_name=received['last_name'],
+                email=received['email'], image_url=image_url)
+
+            db.session.commit()
+            token = create_token(received['username'])
+
+            return jsonify(
+                token=token
+            )
+
+        except IntegrityError:
+            return jsonify (error="error")
 
     else:
         return jsonify(errors=form.errors)
