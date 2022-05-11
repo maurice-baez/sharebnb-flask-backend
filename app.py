@@ -80,8 +80,13 @@ def signup():
         else: image_url = None
 
         try:
-            User.signup(username=received['username'], password=received['password'], first_name=received['first_name'], last_name=received['last_name'],
-                email=received['email'], image_url=image_url)
+            print(received)
+            User.signup(username=received['username'],
+                        password=received['password'],
+                        first_name=received['first_name'],
+                        last_name=received['last_name'],
+                        email=received['email'],
+                        image_url=image_url)
 
             db.session.commit()
             token = create_token(received['username'])
