@@ -54,6 +54,8 @@ class User(db.Model):
 
     listings = db.relationship('Listing', cascade='all, delete')
 
+    bookings = db.relationship('Booking', cascade='all, delete')
+
     # messages = db.relationship('Message',
     #                             cascade='all, delete',
     #                             order_by='Message.timestamp.desc()')
@@ -256,6 +258,71 @@ class Booking(db.Model):
             "endDate": self.end_date,
             "host": self.host,
             "guest": self.guest
+        }
+
+
+class Message(db.Model):
+    """Message in the system."""
+
+    __tablename__ = 'messages'
+
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    listing_id = db.Column(
+        db.Integer,
+        db.ForeignKey('listings.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+
+    to_user = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    from_user = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    body = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+
+    def __repr__(self):
+        return f"<Message #{self.id},Listing id: {self.listing_id}, To: {self.to_user}, From: {self.from_user}, Message: {self.body}>"
+
+    @classmethod
+    def add_message(cls, listing_id, to_user, from_user, body):
+        """Add a new message to database """
+
+        message = Message(
+            listing_id=listing_id,
+            to_user=to_user,
+            from_user=from_user,
+            body=body
+        )
+
+        db.session.add(message)
+
+        return message
+
+    def serialize(self):
+        """ Serialize to dictionary """
+
+        return {
+            "id": self.id,
+            "listingId": self.listing_id,
+            "fromUser": self.from_user,
+            "toUser": self.to_user,
+            "body": self.body
         }
 
 

@@ -16,6 +16,17 @@ class ListingAddForm(FlaskForm):
     type = StringField('Type', validators=[DataRequired()])
     image_url = StringField('(Optional) Image URL')
 
+class BookingAddForm(FlaskForm):
+    """Form for adding a new booking"""
+
+    class Meta:
+        csrf = False
+
+    start_date = StringField('Start Date', validators=[DataRequired()])
+    end_date = StringField('End Date', validators=[DataRequired()])
+    listing_id = IntegerField('Listing ID', validators=[DataRequired()])
+    host = StringField('Host', validators=[DataRequired()])
+    guest = StringField('Guest', validators=[DataRequired()])
 
 class MessageForm(FlaskForm):
     """Form for adding/editing messages."""

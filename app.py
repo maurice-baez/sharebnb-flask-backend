@@ -5,8 +5,8 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 
-from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm
-from models import db, connect_db, User, Listing
+from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm, BookingAddForm
+from models import db, connect_db, User, Listing, Booking
 from helpers import create_token
 
 app = Flask(__name__)
@@ -135,9 +135,9 @@ def add_listing():
                             # CHANGE TO DYNAMIC USERID FROM TOKEN
             db.session.commit()
 
-            new_listing.serialize()
+            serialize = new_listing.serialize()
 
-            return jsonify(listing=new_listing)
+            return jsonify(listing=serialize)
 
         except IntegrityError:
 
@@ -154,3 +154,52 @@ def get_listing(id):
     listing = Listing.query.get(id).serialize()
 
     return jsonify(listing=listing)
+
+
+##############################################################################
+# Bookings routes
+
+@app.get('/bookings')
+def get_bookings():
+
+    bookings = Booking.query.all()
+    serialize = [b.serialize() for b in bookings]
+
+    return jsonify(bookings=serialize)
+
+@app.post('/bookings')
+def add_booking():
+
+    received = request.json
+    form = BookingAddForm(csrf_enabled=False, data=received)
+
+    if form.validate_on_submit():
+
+        try:
+            new_booking = Booking.add_booking(listing_id=received['listing_id'],
+                            start_date=received['start_date'],
+                            end_date=received['end_date'],
+                            host=received['host'],
+                            guest=received['guest'])
+                        
+            db.session.commit()
+
+            serialize = new_booking.serialize()
+
+            return jsonify(booking=serialize)
+
+        except IntegrityError:
+
+            return jsonify(error="database error")
+
+    else:
+        return jsonify(errors=form.errors)
+
+@app.get("/bookings/<int:id>")
+def get_booking(id):
+
+    """Get a single booking"""
+
+    booking = Booking.query.get(id).serialize()
+
+    return jsonify(booking=booking)
