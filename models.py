@@ -129,9 +129,14 @@ class Listing(db.Model):
         db.Text,
         nullable=False
     )
+  
+    type = db.Column(
+        db.Text,
+        nullable=False
+    )
 
     price_per_night = db.Column(
-        db.Float,
+        db.Text,
         nullable=False
     )
 
@@ -146,6 +151,23 @@ class Listing(db.Model):
         db.ForeignKey('users.username', ondelete='CASCADE'),
         nullable=False
     )
+
+    @classmethod
+    def add_listing(cls, title, description, location, type, price_per_night, image_url, user_id):
+        """Add a new listing to database """
+
+        listing = Listing(
+            title=title,
+            description=description,
+            location=location,
+            type=type,
+            price_per_night=price_per_night,
+            image_url=image_url,
+            user_id=user_id
+        )
+
+        db.session.add(listing)
+        return listing
 
 
 

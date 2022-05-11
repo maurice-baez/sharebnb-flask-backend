@@ -3,8 +3,14 @@ from wtforms import StringField, PasswordField, TextAreaField, IntegerField
 from wtforms.validators import DataRequired, Email, Length, InputRequired, Email, NumberRange, AnyOf
 
 
-class CSRFProtection(FlaskForm):
-    """CSRFProtection form, intentionally left blank"""
+class ListingAddForm(FlaskForm):
+    """Form for adding a new Listing"""
+    title = StringField('Title', validators=[DataRequired()])
+    description = StringField('Description', validators=[DataRequired()])
+    location = StringField('Location', validators=[DataRequired()])
+    price_per_night = StringField('Price', validators=[DataRequired()])
+    type = StringField('Type', validators=[DataRequired()])
+    image_url = StringField('(Optional) Image URL')
 
 
 class MessageForm(FlaskForm):
@@ -17,7 +23,7 @@ class UserAddForm(FlaskForm):
     """Form for adding users."""
     class Meta:
         csrf = False
-        
+
     username = StringField('Username', validators=[DataRequired()])
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
@@ -39,6 +45,7 @@ class UserEditForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     """Login form."""
-
+    class Meta:
+        csrf = False
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[Length(min=6)])

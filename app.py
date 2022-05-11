@@ -4,11 +4,9 @@ from flask import Flask, request, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, CSRFProtection
-from models import db, connect_db, User
+from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm
+from models import db, connect_db, User, Listing
 from helpers import create_token
-
-CURR_USER_KEY = "curr_user"
 
 app = Flask(__name__)
 
@@ -27,38 +25,7 @@ db.create_all()
 ##############################################################################
 # User signup/login/logout
 
-
-# @app.before_request
-# def add_user_to_g():
-#     """If we're logged in, add curr user to Flask global."""
-
-#     if CURR_USER_KEY in session:
-#         g.user = User.query.get(session[CURR_USER_KEY])
-
-#     else:
-#         g.user = None
-
-
-# def do_login(user):
-#     """Log in user."""
-
-#     session[CURR_USER_KEY] = user.id
-
-
-# def do_logout():
-#     """Logout user."""
-
-#     if CURR_USER_KEY in session:
-#         del session[CURR_USER_KEY]
-
-# @app.before_request
-# def add_csrf_form_to_all_pages():
-#     """Before every route, add CSRF-only form to global object."""
-
-#     g.csrf_form = CsrfOnlyForm()
-
-
-@app.route('/signup', methods=["GET", "POST"])
+@app.post('/signup')
 def signup():
     """Handle user signup.
 
@@ -80,7 +47,6 @@ def signup():
         else: image_url = None
 
         try:
-            print(received)
             User.signup(username=received['username'],
                         password=received['password'],
                         first_name=received['first_name'],
@@ -90,40 +56,83 @@ def signup():
 
             db.session.commit()
             token = create_token(received['username'])
-
-            return jsonify(
-                token=token
-            )
+            return jsonify(token=token)
 
         except IntegrityError:
-            return jsonify (error="error")
+            return jsonify (error="database error")
 
     else:
         return jsonify(errors=form.errors)
 
 
 
-@app.route('/login', methods=["GET", "POST"])
+@app.post('/login')
 def login():
     """Handle user login."""
-
 
     received = request.json
 
     form = LoginForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
+    
+        user = User.authenticate(username=received['username'],
+                    password=received['password'])
 
-        #try/except here
-        user = User.authenticate(received)
-
-        # token = call createToken function
-
-        return jsonify(
-            token="token"
-        )
+        if user:
+            token = create_token(received['username'])
+            return jsonify(token=token)
+        else:
+            return jsonify(error="invalid username/password")
 
     else:
         return jsonify(errors=form.errors)
+    
 
 
+##############################################################################
+# Listings routes
+
+@app.get('/listings')
+def get_listings():
+    search = request.args.get("q")
+    if not search:
+        listings = Listing.query.all()
+    else:
+        listings = Listing.query.filter(Listing.title.like(f"%{search}%"),
+                                        Listing.location.like(f"%{search}%"),
+                                        Listing.type.like(f"%{search}%"),
+                                        Listing.description.like(f"%{search}%")
+                                        ).all()
+    
+    return jsonify(listings=listings)
+
+@app.post('/listings')
+def add_listing():
+
+    received = request.json
+    form = ListingAddForm(csrf_enabled=False, data=received)
+
+    if form.validate_on_submit():
+
+        if 'image_url' in received:
+            image_url = received['image_url']
+        else: image_url = None
+
+        try:
+            listing = Listing.add_listing(title=received['title'],
+                            description=received['description'],
+                            location=received['location'],
+                            type=received['type'],
+                            price_per_night=received['price_per_night'],
+                            image_url=image_url,
+                            user_id="yuribelo")
+                            # CHANGE TO DYNAMIC USERID FROM TOKEN
+            db.session.commit()
+
+            return jsonify(listing = listing)
+        except IntegrityError:
+            return jsonify(error="database error")
+
+    else:
+        return jsonify(errors=form.errors)
