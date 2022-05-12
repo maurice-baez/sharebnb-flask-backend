@@ -9,6 +9,77 @@ bcrypt = Bcrypt()
 db = SQLAlchemy()
 
 
+class Booking(db.Model):
+    """booking in the system."""
+
+    __tablename__ = 'bookings'
+
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    listing_id= db.Column(
+        db.Integer,
+        db.ForeignKey('listings.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+
+    start_date = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    end_date = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    host = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    guest = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+
+    def __repr__(self):
+        return f"<Listing #{self.id},Listing id: {self.listing_id}, Host: {self.host}, Guest: {self.guest}>"
+
+    @classmethod
+    def add_booking(cls, listing_id, start_date, end_date, host, guest):
+        """Add a new booking to database """
+
+        booking = Booking(
+            listing_id=listing_id,
+            start_date=start_date,
+            end_date=end_date,
+            host=host,
+            guest=guest
+        )
+
+        db.session.add(booking)
+
+        return booking
+
+    def serialize(self):
+        """ Serialize to dictionary """
+
+        return {
+            "id": self.id,
+            "listingId": self.listing_id,
+            "startDate": self.start_date,
+            "endDate": self.end_date,
+            "host": self.host,
+            "guest": self.guest
+        }
+
 class User(db.Model):
     """User in the system."""
 
@@ -54,11 +125,25 @@ class User(db.Model):
 
     listings = db.relationship('Listing', cascade='all, delete')
 
-    bookings = db.relationship('Booking', cascade='all, delete')
+    # bookings = db.relationship('Booking', cascade='all, delete')
 
     # messages = db.relationship('Message',
     #                             cascade='all, delete',
     #                             order_by='Message.timestamp.desc()')
+
+    # host = db.relationship(
+    #     "User",
+    #     secondary="bookings",
+    #     primaryjoin=(Booking.guest == username),
+    #     secondaryjoin=(Booking.host == username)
+    # )
+
+    # guest = db.relationship(
+    #     "User",
+    #     secondary="bookings",
+    #     primaryjoin=(Booking.host == username),
+    #     secondaryjoin=(Booking.guest == username)
+    # )
 
     def __repr__(self):
         return f"<User #{self.username}: {self.email}>"
@@ -104,6 +189,18 @@ class User(db.Model):
                 return user
 
         return False
+
+    def serialize(self):
+        """ Serialize to dictionary """
+
+        return {
+            "username": self.username,
+            "firstName": self.first_name,
+            "lastName": self.last_name,
+            "location": self.location,
+            "email": self.email,
+            "imageUrl": self.image_url,
+        }
 
 
 class Listing(db.Model):
@@ -154,6 +251,10 @@ class Listing(db.Model):
         nullable=False
     )
 
+    messages = db.relationship('Message',
+                                cascade='all, delete',
+                                order_by='Message.timestamp.desc()')
+
     def __repr__(self):
         return f"<Listing #{self.id}, {self.title}, {self.description}, {self.location}, {self.type}, {self.price_per_night}, {self.image_url}, {self.user_id}>"
 
@@ -187,77 +288,6 @@ class Listing(db.Model):
             "pricePerNight": self.price_per_night,
             "imageUrl": self.image_url,
             "userId": self.user_id
-        }
-
-
-class Booking(db.Model):
-    """booking in the system."""
-
-    __tablename__ = 'bookings'
-
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True,
-    )
-
-    listing_id= db.Column(
-        db.Integer,
-        db.ForeignKey('listings.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-
-    start_date = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    end_date = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    host = db.Column(
-        db.Text,
-        db.ForeignKey('users.username', ondelete='CASCADE'),
-        nullable=False
-    )
-
-    guest = db.Column(
-        db.Text,
-        db.ForeignKey('users.username', ondelete='CASCADE'),
-        nullable=False
-    )
-
-    def __repr__(self):
-        return f"<Listing #{self.id},Listing id: {self.listing_id}, Host: {self.host}, Guest: {self.guest}>"
-
-    @classmethod
-    def add_booking(cls, listing_id, start_date, end_date, host, guest):
-        """Add a new booking to database """
-
-        booking = Booking(
-            listing_id=listing_id,
-            start_date=start_date,
-            end_date=end_date,
-            host=host,
-            guest=guest
-        )
-
-        db.session.add(booking)
-
-        return booking
-
-    def serialize(self):
-        """ Serialize to dictionary """
-
-        return {
-            "id": self.id,
-            "listingId": self.listing_id,
-            "startDate": self.start_date,
-            "endDate": self.end_date,
-            "host": self.host,
-            "guest": self.guest
         }
 
 
@@ -295,6 +325,12 @@ class Message(db.Model):
         nullable=False
     )
 
+    timestamp = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+
 
     def __repr__(self):
         return f"<Message #{self.id},Listing id: {self.listing_id}, To: {self.to_user}, From: {self.from_user}, Message: {self.body}>"
@@ -322,7 +358,8 @@ class Message(db.Model):
             "listingId": self.listing_id,
             "fromUser": self.from_user,
             "toUser": self.to_user,
-            "body": self.body
+            "body": self.body,
+            "timeStamp": self.timestamp
         }
 
 

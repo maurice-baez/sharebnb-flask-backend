@@ -38,7 +38,7 @@ def signup():
     """
 
     received = request.json
-
+    #request.forms, request.files
     form = UserAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
@@ -92,6 +92,37 @@ def login():
 
 
 ##############################################################################
+# User routes
+
+@app.get('/users')
+def get_users():
+    """Get list of all users"""
+
+    users = User.query.all()
+    serialize = [u.serialize() for u in users]
+
+    return jsonify(users=serialize)
+
+@app.get('/users/<username>')
+def get_user_by_id(username):
+    """Get list of all users"""
+
+    user = User.query.get(username)
+    serialize = user.serialize()
+
+    return jsonify(user=serialize)
+
+# @app.get('/users/<username>/messages')
+# def get_user_by_id(username):
+#     """Get list of all users"""
+
+#     user = User.query.get(username)
+#     serialize = user.serialize()
+
+#     return jsonify(user=serialize)
+
+
+##############################################################################
 # Listings routes
 
 @app.get('/listings')
@@ -131,7 +162,7 @@ def add_listing():
                             type=received['type'],
                             price_per_night=received['price_per_night'],
                             image_url=image_url,
-                            user_id="yuribelo")
+                            user_id="maurice")
                             # CHANGE TO DYNAMIC USERID FROM TOKEN
             db.session.commit()
 
@@ -181,7 +212,7 @@ def add_booking():
                             end_date=received['end_date'],
                             host=received['host'],
                             guest=received['guest'])
-                        
+
             db.session.commit()
 
             serialize = new_booking.serialize()
@@ -203,3 +234,6 @@ def get_booking(id):
     booking = Booking.query.get(id).serialize()
 
     return jsonify(booking=booking)
+
+
+
