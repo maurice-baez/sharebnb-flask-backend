@@ -36,12 +36,6 @@ class Booking(db.Model):
         nullable=False
     )
 
-    host = db.Column(
-        db.Text,
-        db.ForeignKey('users.username', ondelete='CASCADE'),
-        nullable=False
-    )
-
     guest = db.Column(
         db.Text,
         db.ForeignKey('users.username', ondelete='CASCADE'),
@@ -50,17 +44,16 @@ class Booking(db.Model):
 
 
     def __repr__(self):
-        return f"<Listing #{self.id},Listing id: {self.listing_id}, Host: {self.host}, Guest: {self.guest}>"
+        return f"<Listing #{self.id},Listing id: {self.listing_id},  Guest: {self.guest}>"
 
     @classmethod
-    def add_booking(cls, listing_id, start_date, end_date, host, guest):
+    def add_booking(cls, listing_id, start_date, end_date, guest):
         """Add a new booking to database """
 
         booking = Booking(
             listing_id=listing_id,
             start_date=start_date,
             end_date=end_date,
-            host=host,
             guest=guest
         )
 
@@ -76,7 +69,6 @@ class Booking(db.Model):
             "listingId": self.listing_id,
             "startDate": self.start_date,
             "endDate": self.end_date,
-            "host": self.host,
             "guest": self.guest
         }
 
@@ -125,7 +117,7 @@ class User(db.Model):
 
     listings = db.relationship('Listing', cascade='all, delete')
 
-    # bookings = db.relationship('Booking', cascade='all, delete')
+    bookings = db.relationship('Booking', cascade='all, delete')
 
     # messages = db.relationship('Message',
     #                             cascade='all, delete',
@@ -199,7 +191,9 @@ class User(db.Model):
             "lastName": self.last_name,
             "location": self.location,
             "email": self.email,
-            "imageUrl": self.image_url,
+            "bookings": [b.serialize() for b in self.bookings],
+            "listings": [l.serialize() for l in self.listings],
+            "imageUrl": self.image_url
         }
 
 

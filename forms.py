@@ -25,7 +25,7 @@ class BookingAddForm(FlaskForm):
     start_date = StringField('Start Date', validators=[DataRequired()])
     end_date = StringField('End Date', validators=[DataRequired()])
     listing_id = IntegerField('Listing ID', validators=[DataRequired()])
-    host = StringField('Host', validators=[DataRequired()])
+    guest = StringField('Guest', validators=[DataRequired()])
 
 class MessageForm(FlaskForm):
     """Form for adding/editing messages."""

@@ -291,7 +291,6 @@ def add_booking():
             new_booking = Booking.add_booking(listing_id=received['listing_id'],
                             start_date=received['start_date'],
                             end_date=received['end_date'],
-                            host=received['host'],
                             guest=curr_user['username'])
 
             db.session.commit()
