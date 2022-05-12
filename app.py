@@ -9,6 +9,7 @@ from sqlalchemy import or_
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm, BookingAddForm
 from models import db, connect_db, User, Listing, Booking, Message
 from helpers import create_token, verify_token
+from upload import upload_to_aws
 
 app = Flask(__name__)
 
@@ -38,26 +39,26 @@ def signup():
     If theres already a user with that username: throw Error
     """
 
-    received = request.json
-    #request.forms, request.files
-    form = UserAddForm(csrf_enabled=False, data=received)
+    form_data = request.form
+    image_url = None
+    if request.files['image']:
+        img_file = request.files['image']
+        image_url = upload_to_aws(img_file)
+
+    form = UserAddForm(csrf_enabled=False, data=form_data)
 
     if form.validate_on_submit():
 
-        if 'image_url' in received:
-            image_url = received['image_url']
-        else: image_url = None
-
         try:
-            User.signup(username=received['username'],
-                        password=received['password'],
-                        first_name=received['first_name'],
-                        last_name=received['last_name'],
-                        email=received['email'],
+            User.signup(username=form_data['username'],
+                        password=form_data['password'],
+                        first_name=form_data['first_name'],
+                        last_name=form_data['last_name'],
+                        email=form_data['email'],
                         image_url=image_url)
 
             db.session.commit()
-            token = create_token(received['username'])
+            token = create_token(form_data['username'])
             return jsonify(token=token)
 
         except IntegrityError:
@@ -157,14 +158,15 @@ def add_listing():
     except:
         return jsonify(error= "Unauthorized", status_code= 404)
 
-    received = request.json
+    received = request.form
+    image_url = None
+    if request.files['image']:
+        img_file = request.files['image']
+        image_url = upload_to_aws(img_file)
+ 
     form = ListingAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
-
-        if 'image_url' in received:
-            image_url = received['image_url']
-        else: image_url = None
 
         try:
             new_listing = Listing.add_listing(title=received['title'],
