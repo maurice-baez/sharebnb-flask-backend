@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm, BookingAddForm
-from models import db, connect_db, User, Listing, Booking, Message
+from models import db, connect_db, User, Listing, Booking, Message, Image
 from helpers import create_token, verify_token
 from upload import upload_to_aws
 
@@ -159,11 +159,6 @@ def add_listing():
         return jsonify(error= "Unauthorized", status_code= 404)
 
     received = request.form
-    image_url = None
-    if request.files['image']:
-        img_file = request.files['image']
-        image_url = upload_to_aws(img_file)
- 
     form = ListingAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
@@ -174,17 +169,23 @@ def add_listing():
                             location=received['location'],
                             type=received['type'],
                             price_per_night=received['price_per_night'],
-                            image_url=image_url,
                             user_id=curr_user['username'])
 
             db.session.commit()
+
+            if request.files:
+                img_files = request.files.getlist('image')
+                image_urls = [upload_to_aws(file) for file in img_files]
+                for url in image_urls:
+                    Image.add_image(listing_id=new_listing.id, user=curr_user['username'], image_url=url)
+                db.session.commit()
 
             serialize = new_listing.serialize()
 
             return jsonify(listing=serialize)
 
-        except IntegrityError:
-
+        except IntegrityError as e:
+            print(e)
             return jsonify(error="database error")
 
     else:

@@ -239,12 +239,6 @@ class Listing(db.Model):
         nullable=False
     )
 
-    image_url = db.Column(
-        db.Text,
-        default="/static/images/default-pic.png",
-        nullable=False
-    )
-
     user_id = db.Column(
         db.Text,
         db.ForeignKey('users.username', ondelete='CASCADE'),
@@ -255,11 +249,14 @@ class Listing(db.Model):
                                 cascade='all, delete',
                                 order_by='Message.timestamp.desc()')
 
+    images = db.relationship('Image',
+                                cascade='all, delete')
+
     def __repr__(self):
-        return f"<Listing #{self.id}, {self.title}, {self.description}, {self.location}, {self.type}, {self.price_per_night}, {self.image_url}, {self.user_id}>"
+        return f"<Listing #{self.id}, {self.title}, {self.description}, {self.location}, {self.type}, {self.price_per_night}, {self.user_id}>"
 
     @classmethod
-    def add_listing(cls, title, description, location, type, price_per_night, image_url, user_id):
+    def add_listing(cls, title, description, location, type, price_per_night, user_id):
         """Add a new listing to database """
 
         listing = Listing(
@@ -268,7 +265,6 @@ class Listing(db.Model):
             location=location,
             type=type,
             price_per_night=price_per_night,
-            image_url=image_url,
             user_id=user_id
         )
 
@@ -276,6 +272,7 @@ class Listing(db.Model):
 
         return listing
 
+        
     def serialize(self):
         """ Serialize to dictionary """
 
@@ -286,9 +283,11 @@ class Listing(db.Model):
             "location": self.location,
             "type": self.type,
             "pricePerNight": self.price_per_night,
-            "imageUrl": self.image_url,
+            "images": [i.image_url for i in self.images],
             "userId": self.user_id
         }
+
+
 
 
 class Message(db.Model):
@@ -361,6 +360,57 @@ class Message(db.Model):
             "body": self.body,
             "timeStamp": self.timestamp
         }
+
+class Image(db.Model):
+    """Image in the system."""
+
+    __tablename__ = 'images'
+
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    listing_id = db.Column(
+        db.Integer,
+        db.ForeignKey('listings.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+
+    user = db.Column(
+        db.Text,
+        db.ForeignKey('users.username', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    image_url = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    def serialize(self):
+        """ Serialize to dictionary """
+
+        return {
+            "id": self.id,
+            "listingID": self.listing_id,
+            "user": self.user,
+            "imageURL": self.image_url
+        }
+
+    @classmethod
+    def add_image(cls, listing_id, user, image_url):
+        """Add a new image to database """
+
+        image = Image(
+            listing_id=listing_id,
+            user=user,
+            image_url=image_url
+        )
+
+        db.session.add(image)
+
 
 
 def connect_db(app):
