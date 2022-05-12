@@ -1,4 +1,5 @@
 import os
+from telnetlib import STATUS
 
 from flask import Flask, request, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
@@ -6,8 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ListingAddForm, BookingAddForm
-from models import db, connect_db, User, Listing, Booking
-from helpers import create_token
+from models import db, connect_db, User, Listing, Booking, Message
+from helpers import create_token, verify_token
 
 app = Flask(__name__)
 
@@ -105,21 +106,24 @@ def get_users():
 
 @app.get('/users/<username>')
 def get_user_by_id(username):
-    """Get list of all users"""
+    """Get a user by username"""
 
     user = User.query.get(username)
     serialize = user.serialize()
 
     return jsonify(user=serialize)
 
-# @app.get('/users/<username>/messages')
-# def get_user_by_id(username):
-#     """Get list of all users"""
+@app.get('/users/<username>/messages')
+def get_messages_by_user(username):
+    """Get list of users messages"""
+    ###### use this on users profile to get all messages
+    ###### sort by from_user for host, sort by l_id for guest, pass as props to child component
 
-#     user = User.query.get(username)
-#     serialize = user.serialize()
+    messages = Message.query.filter(Message.to_user == username).all()
+    serialize = [m.serialize() for m in messages]
 
-#     return jsonify(user=serialize)
+    return jsonify(messages=serialize)
+
 
 
 ##############################################################################
@@ -127,9 +131,9 @@ def get_user_by_id(username):
 
 @app.get('/listings')
 def get_listings():
+
     search = request.args.get("q")
 
-    print("search=", search)
     if not search:
         listings = Listing.query.all()
     else:
@@ -145,6 +149,13 @@ def get_listings():
 
 @app.post('/listings')
 def add_listing():
+
+    token = request.headers['token']
+
+    try:
+        curr_user = verify_token(token)
+    except:
+        return jsonify(error= "Unauthorized", status_code= 404)
 
     received = request.json
     form = ListingAddForm(csrf_enabled=False, data=received)
@@ -162,8 +173,8 @@ def add_listing():
                             type=received['type'],
                             price_per_night=received['price_per_night'],
                             image_url=image_url,
-                            user_id="maurice")
-                            # CHANGE TO DYNAMIC USERID FROM TOKEN
+                            user_id=curr_user['username'])
+
             db.session.commit()
 
             serialize = new_listing.serialize()
@@ -186,14 +197,73 @@ def get_listing(id):
 
     return jsonify(listing=listing)
 
+@app.get('/listings/<int:id>/messages')
+def get_messages_by_listing(id):
+    """Get list of listing's messages"""
+
+    token = request.headers['token']
+
+    try:
+        verify_token(token)
+    except:
+        return jsonify(error= "Unauthorized", status_code= 404)
+
+    messages = Message.query.filter(Message.listing_id == id).all()
+    serialize = [m.serialize() for m in messages]
+
+    return jsonify(messages=serialize)
+
+
+@app.post('/listings/<int:id>/messages')
+def send_message_by_listing(id):
+    """Send a message to a user by listing id"""
+
+    token = request.headers['token']
+
+    try:
+        curr_user = verify_token(token)
+    except:
+        return jsonify(error= "Unauthorized", status_code= 404)
+
+    received = request.json
+    form = MessageForm(csrf_enabled=False, data=received)
+
+    if form.validate_on_submit():
+        try:
+            new_message = Message.add_message(listing_id=id,
+                            to_user=received['to_user'],
+                            from_user=curr_user['username'],
+                            body=received['body'])
+
+            db.session.commit()
+
+            serialize = new_message.serialize()
+
+            return jsonify(message=serialize)
+
+        except IntegrityError:
+
+            return jsonify(error="database error")
+
+    else:
+        return jsonify(errors=form.errors)
+
 
 ##############################################################################
 # Bookings routes
 
 @app.get('/bookings')
-def get_bookings():
+def get_bookings_by_username():
 
-    bookings = Booking.query.all()
+    token = request.headers['token']
+
+    try:
+        curr_user = verify_token(token)
+    except:
+        return jsonify(error= "Unauthorized", status_code= 404)
+
+    bookings = Booking.query.filter(Booking.guest == curr_user['username']).all()
+
     serialize = [b.serialize() for b in bookings]
 
     return jsonify(bookings=serialize)
@@ -201,7 +271,15 @@ def get_bookings():
 @app.post('/bookings')
 def add_booking():
 
+    token = request.headers['token']
+
+    try:
+        curr_user = verify_token(token)
+    except:
+        return jsonify(error= "Unauthorized", status_code= 404)
+
     received = request.json
+
     form = BookingAddForm(csrf_enabled=False, data=received)
 
     if form.validate_on_submit():
@@ -211,7 +289,7 @@ def add_booking():
                             start_date=received['start_date'],
                             end_date=received['end_date'],
                             host=received['host'],
-                            guest=received['guest'])
+                            guest=curr_user['username'])
 
             db.session.commit()
 
@@ -228,8 +306,14 @@ def add_booking():
 
 @app.get("/bookings/<int:id>")
 def get_booking(id):
-
     """Get a single booking"""
+
+    token = request.headers['token']
+
+    try:
+        verify_token(token)
+    except:
+        return jsonify(error= "Unauthorized", status_code= 404)
 
     booking = Booking.query.get(id).serialize()
 

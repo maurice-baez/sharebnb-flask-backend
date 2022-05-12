@@ -26,17 +26,20 @@ class BookingAddForm(FlaskForm):
     end_date = StringField('End Date', validators=[DataRequired()])
     listing_id = IntegerField('Listing ID', validators=[DataRequired()])
     host = StringField('Host', validators=[DataRequired()])
-    guest = StringField('Guest', validators=[DataRequired()])
 
 class MessageForm(FlaskForm):
     """Form for adding/editing messages."""
 
-    text = TextAreaField('text', validators=[DataRequired()])
+
+    class Meta:
+        csrf = False
+
+    body = TextAreaField('body', validators=[DataRequired()])
 
 
 class UserAddForm(FlaskForm):
     """Form for adding users."""
-    
+
     class Meta:
         csrf = False
 
@@ -51,6 +54,9 @@ class UserAddForm(FlaskForm):
 class UserEditForm(FlaskForm):
     """Form for editing users."""
 
+    class Meta:
+        csrf = False
+
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
     email = StringField('E-mail', validators=[DataRequired(), Email()])
@@ -61,7 +67,9 @@ class UserEditForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     """Login form."""
+
     class Meta:
         csrf = False
+
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[Length(min=6)])
