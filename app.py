@@ -1,6 +1,6 @@
 import os
-from telnetlib import STATUS
 
+from flask_cors import CORS
 from flask import Flask, request, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
@@ -12,6 +12,7 @@ from helpers import create_token, verify_token
 from upload import upload_to_aws
 
 app = Flask(__name__)
+CORS(app)
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
