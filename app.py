@@ -11,12 +11,13 @@ from models import db, connect_db, User, Listing, Booking, Message, Image
 from helpers import create_token, verify_token
 from upload import upload_to_aws
 
+database_url = os.environ['DATABASE_URL']
+database_url = database_url.replace('postgres://', 'postgresql://')
+
 app = Flask(__name__)
 CORS(app)
-database_url = os.environ['DATABASE_URL']
 
 # fix incorrect database URIs currently returned by Heroku's pg setup
-database_url = database_url.replace('postgres://', 'postgresql://')
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
