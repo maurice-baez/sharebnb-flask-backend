@@ -1,7 +1,7 @@
 import os
 
 from flask_cors import CORS
-from flask import Flask, request, session, g, jsonify
+from flask import Flask, request, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
@@ -12,14 +12,12 @@ from helpers import create_token, verify_token
 from upload import upload_to_aws
 
 database_url = os.environ['DATABASE_URL']
+# fix incorrect database URIs currently returned by Heroku's pg setup
 database_url = database_url.replace('postgres://', 'postgresql://')
 
 app = Flask(__name__)
 CORS(app)
 
-# fix incorrect database URIs currently returned by Heroku's pg setup
-# Get DB_URI from environ variable (useful for production/testing) or,
-# if not set there, use development local db.
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
@@ -28,6 +26,7 @@ app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
+db.drop_all()
 db.create_all()
 
 ##############################################################################
