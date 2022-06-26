@@ -17,7 +17,7 @@ CORS(app)
 
 database_url = os.environ['DATABASE_URL']
 # # fix incorrect database URIs currently returned by Heroku's pg setup
-# database_url = database_url.replace('postgres://', 'postgresql://')
+database_url = database_url.replace('postgres://', 'postgresql://')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
