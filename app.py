@@ -43,11 +43,11 @@ def signup():
     If theres already a user with that username: throw Error
     """
 
-    form_data = request.form
-    image_url = None
-    if request.files['image']:
-        img_file = request.files['image']
-        image_url = upload_to_aws(img_file)
+    form_data = request.json
+    image_url = "https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg"
+    # if request.files['image']:
+    #     img_file = request.files['image']
+    #     image_url = upload_to_aws(img_file)
 
     form = UserAddForm(csrf_enabled=False, data=form_data)
 
