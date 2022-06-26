@@ -14,13 +14,12 @@ class Booking(db.Model):
 
     __tablename__ = 'bookings'
 
-
     id = db.Column(
         db.Integer,
         primary_key=True,
     )
 
-    listing_id= db.Column(
+    listing_id = db.Column(
         db.Integer,
         db.ForeignKey('listings.id', ondelete='CASCADE'),
         nullable=False,
@@ -41,7 +40,6 @@ class Booking(db.Model):
         db.ForeignKey('users.username', ondelete='CASCADE'),
         nullable=False
     )
-
 
     def __repr__(self):
         return f"<Listing #{self.id},Listing id: {self.listing_id},  Guest: {self.guest}>"
@@ -72,6 +70,7 @@ class Booking(db.Model):
             "guest": self.guest
         }
 
+
 class User(db.Model):
     """User in the system."""
 
@@ -98,7 +97,6 @@ class User(db.Model):
         unique=True,
     )
 
-
     image_url = db.Column(
         db.Text,
         default="",
@@ -113,7 +111,6 @@ class User(db.Model):
         db.Text,
         nullable=False,
     )
-
 
     listings = db.relationship('Listing', cascade='all, delete')
 
@@ -139,7 +136,6 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User #{self.username}: {self.email}>"
-
 
     @classmethod
     def signup(cls, username, first_name, last_name, email, password, image_url):
@@ -202,7 +198,6 @@ class Listing(db.Model):
 
     __tablename__ = 'listings'
 
-
     id = db.Column(
         db.Integer,
         primary_key=True,
@@ -240,11 +235,11 @@ class Listing(db.Model):
     )
 
     messages = db.relationship('Message',
-                                cascade='all, delete',
-                                order_by='Message.timestamp.desc()')
+                               cascade='all, delete',
+                               order_by='Message.timestamp.desc()')
 
     images = db.relationship('Image',
-                                cascade='all, delete')
+                             cascade='all, delete')
 
     def __repr__(self):
         return f"<Listing #{self.id}, {self.title}, {self.description}, {self.location}, {self.type}, {self.price_per_night}, {self.user_id}>"
@@ -266,7 +261,6 @@ class Listing(db.Model):
 
         return listing
 
-        
     def serialize(self):
         """ Serialize to dictionary """
 
@@ -282,13 +276,10 @@ class Listing(db.Model):
         }
 
 
-
-
 class Message(db.Model):
     """Message in the system."""
 
     __tablename__ = 'messages'
-
 
     id = db.Column(
         db.Integer,
@@ -324,7 +315,6 @@ class Message(db.Model):
         default=datetime.utcnow,
     )
 
-
     def __repr__(self):
         return f"<Message #{self.id},Listing id: {self.listing_id}, To: {self.to_user}, From: {self.from_user}, Message: {self.body}>"
 
@@ -355,11 +345,11 @@ class Message(db.Model):
             "timeStamp": self.timestamp
         }
 
+
 class Image(db.Model):
     """Image in the system."""
 
     __tablename__ = 'images'
-
 
     id = db.Column(
         db.Integer,
@@ -404,7 +394,6 @@ class Image(db.Model):
         )
 
         db.session.add(image)
-
 
 
 def connect_db(app):
