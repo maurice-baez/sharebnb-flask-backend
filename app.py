@@ -15,7 +15,7 @@ from upload import upload_to_aws
 app = Flask(__name__)
 CORS(app)
 
-# database_url = os.environ['DATABASE_URL']
+database_url = os.environ['DATABASE_URL']
 # # fix incorrect database URIs currently returned by Heroku's pg setup
 # database_url = database_url.replace('postgres://', 'postgresql://')
 
