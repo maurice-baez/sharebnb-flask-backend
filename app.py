@@ -2,6 +2,7 @@ import os
 
 from flask_cors import CORS
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
@@ -11,6 +12,7 @@ from models import db, connect_db, User, Listing, Booking, Message, Image
 from helpers import create_token, verify_token
 from upload import upload_to_aws
 
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
