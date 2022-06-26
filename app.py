@@ -26,10 +26,10 @@ app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
-db.create_all()
 
 ##############################################################################
 # User signup/login/logout
+
 
 @app.post('/signup')
 def signup():
@@ -65,11 +65,10 @@ def signup():
             return jsonify(token=token)
 
         except IntegrityError:
-            return jsonify (error="database error")
+            return jsonify(error="database error")
 
     else:
         return jsonify(errors=form.errors)
-
 
 
 @app.post('/login')
@@ -83,7 +82,7 @@ def login():
     if form.validate_on_submit():
 
         user = User.authenticate(username=received['username'],
-                    password=received['password'])
+                                 password=received['password'])
 
         if user:
             token = create_token(received['username'])
@@ -93,7 +92,6 @@ def login():
 
     else:
         return jsonify(errors=form.errors)
-
 
 
 ##############################################################################
@@ -108,6 +106,7 @@ def get_users():
 
     return jsonify(users=serialize)
 
+
 @app.get('/users/<username>')
 def get_user_by_id(username):
     """Get a user by username"""
@@ -117,17 +116,17 @@ def get_user_by_id(username):
 
     return jsonify(user=serialize)
 
+
 @app.get('/users/<username>/messages')
 def get_messages_by_user(username):
     """Get list of users messages"""
-    ###### use this on users profile to get all messages
-    ###### sort by from_user for host, sort by l_id for guest, pass as props to child component
+    # use this on users profile to get all messages
+    # sort by from_user for host, sort by l_id for guest, pass as props to child component
 
     messages = Message.query.filter(Message.to_user == username).all()
     serialize = [m.serialize() for m in messages]
 
     return jsonify(messages=serialize)
-
 
 
 ##############################################################################
@@ -145,11 +144,12 @@ def get_listings():
                                         Listing.location.like(f"%{search}%"),
                                         Listing.type.like(f"%{search}%"),
                                         Listing.description.like(f"%{search}%")
-                                        )).all()
+                                            )).all()
 
     serialize = [l.serialize() for l in listings]
 
     return jsonify(listings=serialize)
+
 
 @app.post('/listings')
 def add_listing():
@@ -159,7 +159,7 @@ def add_listing():
     try:
         curr_user = verify_token(token)
     except:
-        return jsonify(error= "Unauthorized", status_code= 404)
+        return jsonify(error="Unauthorized", status_code=404)
 
     received = request.form
     form = ListingAddForm(csrf_enabled=False, data=received)
@@ -168,11 +168,11 @@ def add_listing():
 
         try:
             new_listing = Listing.add_listing(title=received['title'],
-                            description=received['description'],
-                            location=received['location'],
-                            type=received['type'],
-                            price_per_night=received['price_per_night'],
-                            user_id=curr_user['username'])
+                                              description=received['description'],
+                                              location=received['location'],
+                                              type=received['type'],
+                                              price_per_night=received['price_per_night'],
+                                              user_id=curr_user['username'])
 
             db.session.commit()
 
@@ -180,7 +180,8 @@ def add_listing():
                 img_files = request.files.getlist('image')
                 image_urls = [upload_to_aws(file) for file in img_files]
                 for url in image_urls:
-                    Image.add_image(listing_id=new_listing.id, user=curr_user['username'], image_url=url)
+                    Image.add_image(listing_id=new_listing.id,
+                                    user=curr_user['username'], image_url=url)
                 db.session.commit()
 
             serialize = new_listing.serialize()
@@ -194,14 +195,15 @@ def add_listing():
     else:
         return jsonify(errors=form.errors)
 
+
 @app.get("/listings/<int:id>")
 def get_listing(id):
-
     """Get a single listing"""
 
     listing = Listing.query.get(id).serialize()
 
     return jsonify(listing=listing)
+
 
 @app.get('/listings/<int:id>/messages')
 def get_messages_by_listing(id):
@@ -212,7 +214,7 @@ def get_messages_by_listing(id):
     try:
         verify_token(token)
     except:
-        return jsonify(error= "Unauthorized", status_code= 404)
+        return jsonify(error="Unauthorized", status_code=404)
 
     messages = Message.query.filter(Message.listing_id == id).all()
     serialize = [m.serialize() for m in messages]
@@ -229,7 +231,7 @@ def send_message_by_listing(id):
     try:
         curr_user = verify_token(token)
     except:
-        return jsonify(error= "Unauthorized", status_code= 404)
+        return jsonify(error="Unauthorized", status_code=404)
 
     received = request.json
     form = MessageForm(csrf_enabled=False, data=received)
@@ -237,9 +239,9 @@ def send_message_by_listing(id):
     if form.validate_on_submit():
         try:
             new_message = Message.add_message(listing_id=id,
-                            to_user=received['to_user'],
-                            from_user=curr_user['username'],
-                            body=received['body'])
+                                              to_user=received['to_user'],
+                                              from_user=curr_user['username'],
+                                              body=received['body'])
 
             db.session.commit()
 
@@ -266,13 +268,15 @@ def get_bookings_by_username():
     try:
         curr_user = verify_token(token)
     except:
-        return jsonify(error= "Unauthorized", status_code= 404)
+        return jsonify(error="Unauthorized", status_code=404)
 
-    bookings = Booking.query.filter(Booking.guest == curr_user['username']).all()
+    bookings = Booking.query.filter(
+        Booking.guest == curr_user['username']).all()
 
     serialize = [b.serialize() for b in bookings]
 
     return jsonify(bookings=serialize)
+
 
 @app.post('/bookings')
 def add_booking():
@@ -282,7 +286,7 @@ def add_booking():
     try:
         curr_user = verify_token(token)
     except:
-        return jsonify(error= "Unauthorized", status_code= 404)
+        return jsonify(error="Unauthorized", status_code=404)
 
     received = request.json
 
@@ -292,9 +296,9 @@ def add_booking():
 
         try:
             new_booking = Booking.add_booking(listing_id=received['listing_id'],
-                            start_date=received['start_date'],
-                            end_date=received['end_date'],
-                            guest=curr_user['username'])
+                                              start_date=received['start_date'],
+                                              end_date=received['end_date'],
+                                              guest=curr_user['username'])
 
             db.session.commit()
 
@@ -309,6 +313,7 @@ def add_booking():
     else:
         return jsonify(errors=form.errors)
 
+
 @app.get("/bookings/<int:id>")
 def get_booking(id):
     """Get a single booking"""
@@ -318,11 +323,8 @@ def get_booking(id):
     try:
         verify_token(token)
     except:
-        return jsonify(error= "Unauthorized", status_code= 404)
+        return jsonify(error="Unauthorized", status_code=404)
 
     booking = Booking.query.get(id).serialize()
 
     return jsonify(booking=booking)
-
-
-
