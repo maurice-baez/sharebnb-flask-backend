@@ -54,7 +54,7 @@ def signup():
     if form.validate_on_submit():
 
         try:
-            User.signup(username=form_data['username'],
+            User.signup(username=form_data['username'].lower(),
                         password=form_data['password'],
                         first_name=form_data['first_name'],
                         last_name=form_data['last_name'],
@@ -62,7 +62,7 @@ def signup():
                         image_url=image_url)
 
             db.session.commit()
-            token = create_token(form_data['username'])
+            token = create_token(form_data['username'].lower())
             return jsonify(token=token)
 
         except IntegrityError:
@@ -82,11 +82,11 @@ def login():
 
     if form.validate_on_submit():
 
-        user = User.authenticate(username=received['username'],
+        user = User.authenticate(username=received['username'].lower(),
                                  password=received['password'])
 
         if user:
-            token = create_token(received['username'])
+            token = create_token(received['username'].lower())
             return jsonify(token=token)
         else:
             return jsonify(error="invalid username/password")
