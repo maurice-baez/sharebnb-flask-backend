@@ -206,6 +206,19 @@ def get_listing(id):
     return jsonify(listing=listing)
 
 
+@app.delete("/listings/<int:id>")
+def delete_listing(id):
+    """Delete a listing"""
+
+    listing = Listing.query.get_or_404(id)
+    print("LISTING=", listing)
+
+    db.session.delete(listing)
+    db.session.commit()
+
+    return jsonify(deleted=listing.id)
+
+
 @app.get('/listings/<int:id>/messages')
 def get_messages_by_listing(id):
     """Get list of listing's messages"""
