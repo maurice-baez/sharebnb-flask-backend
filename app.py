@@ -139,6 +139,7 @@ def get_messages_by_user(username):
 def get_listings():
 
     search = request.args.get("q")
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$", search)
 
     if not search:
         listings = Listing.query.all()
