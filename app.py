@@ -52,7 +52,6 @@ def signup():
     form = UserAddForm(csrf_enabled=False, data=form_data)
 
     if form.validate_on_submit():
-
         try:
             User.signup(username=form_data['username'].lower(),
                         password=form_data['password'],
@@ -65,11 +64,14 @@ def signup():
             token = create_token(form_data['username'].lower())
             return jsonify(token=token)
 
-        except IntegrityError:
-            return jsonify(error="database error")
+        except Exception as e:
+            print(e)
+
+        return jsonify(message="Error: Duplicate username and/or email"), 401
 
     else:
-        return jsonify(errors=form.errors)
+        # return jsonify(message=form.errors), 400
+        return jsonify(message="Error: Invalid form input"), 400
 
 
 @app.post('/login')
