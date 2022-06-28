@@ -89,10 +89,10 @@ def login():
             token = create_token(received['username'].lower())
             return jsonify(token=token)
         else:
-            return jsonify(error="invalid username/password")
+            return jsonify(message="invalid username/password"), 401
 
     else:
-        return jsonify(errors=form.errors)
+        return jsonify(message="invalid form input"), 400
 
 
 ##############################################################################
